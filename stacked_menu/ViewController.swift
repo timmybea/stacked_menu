@@ -58,8 +58,6 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
                 offset -= 50
             }
         }
-        
-        
     }
 
 
@@ -109,29 +107,30 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
             view.addSubview(recipeView)
             recipeVC.didMove(toParentViewController: self)
             
-//            let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(recognizer:)))
-//            view.addGestureRecognizer(panGestureRecognizer)
-//            
-//            let collision = UICollisionBehavior(items: [view])
-//            collision.collisionDelegate = self
-//            dynamicAnimator.addBehavior(collision)
-//            
-//            //lower boundary
-//            let boundaryY = view.frame.origin.y + view.frame.size.height
-//            var boundaryStart = CGPoint(x: 0, y: boundaryY)
-//            var boundaryEnd = CGPoint(x: view.bounds.size.width, y: boundaryY)
-//            collision.addBoundary(withIdentifier: 1 as NSCopying, from: boundaryStart, to: boundaryEnd)
-//            
-//            //upper boundary
-//            boundaryStart = CGPoint(x: 0, y: 0)
-//            boundaryEnd = CGPoint(x: self.view.frame.width, y: 0)
-//            collision.addBoundary(withIdentifier: 2 as NSCopying, from: boundaryStart, to: boundaryEnd)
-//            
-//            gravity.addItem(recipeView)
-//            
-//            let itemBehavior = UIDynamicItemBehavior(items: [recipeView])
-//            
-//            dynamicAnimator.addBehavior(itemBehavior)
+            let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(recognizer:)))
+            recipeView.addGestureRecognizer(panGestureRecognizer)
+
+            let collision = UICollisionBehavior(items: [recipeView])
+            collision.collisionDelegate = self
+            dynamicAnimator.addBehavior(collision)
+
+            //lower boundary
+            let boundaryY = recipeView.frame.origin.y + recipeView.frame.size.height
+            var boundaryStart = CGPoint(x: 0, y: boundaryY)
+            var boundaryEnd = CGPoint(x: self.view.bounds.size.width, y: boundaryY)
+            collision.addBoundary(withIdentifier: 1 as NSCopying, from: boundaryStart, to: boundaryEnd)
+
+            //upper boundary
+            boundaryStart = CGPoint(x: 0, y: 0)
+            boundaryEnd = CGPoint(x: self.view.bounds.size.width, y: 0)
+            collision.addBoundary(withIdentifier: 2 as NSCopying, from: boundaryStart, to: boundaryEnd)
+
+            gravity.addItem(recipeView)
+            
+            //Need to add dynamic item behavior to check state in handlePan(recognizer:)
+            let itemBehavior = UIDynamicItemBehavior(items: [recipeView])
+            
+            dynamicAnimator.addBehavior(itemBehavior)
             
             return recipeView
             
@@ -142,8 +141,60 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
     }
     
     func handlePan(recognizer: UIPanGestureRecognizer) {
+        let touchedPoint = recognizer.location(in: self.view)
+        let draggedView = recognizer.view
+        
+        if recognizer.state == .began {
+            let dragStartPoint = recognizer.location(in: draggedView)
+            
+            if dragStartPoint.y < 200 {
+                viewDragging = true
+                previousTouchPoint = touchedPoint
+                
+            } else if recognizer.state == .changed && viewDragging {
+                let yOffset = previousTouchPoint.y - touchedPoint.y
+                
+                draggedView?.center = CGPoint(x: draggedView?.center.x, y: draggedView?.center.y - yOffset)
+                previousTouchPoint = touchedPoint
+                
+            } else if recognizer.state == .ended && viewDragging {
+                
+                dynamicAnimator.updateItem(usingCurrentState: <#T##UIDynamicItem#>)
+                
+            }
+        }
         
     }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
 
