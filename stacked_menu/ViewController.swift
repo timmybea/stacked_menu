@@ -8,8 +8,20 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UICollisionBehaviorDelegate {
 
+    let data = ["Puttanesca", "Couscous salad", "Sundried Tomato Loaf", "Green Curry"]
+    
+    var views = [UIView]()
+    
+    var dynamicAnimator: UIDynamicAnimator!
+    var gravity: UIGravityBehavior!
+    var snap: UISnapBehavior!
+    var previousTouchPoint: CGPoint!
+    var viewDragging = false
+    var viewPinned = false
+    
+    
     let imageView: UIImageView = {
         let view = UIImageView()
         view.backgroundColor = UIColor.black
@@ -17,27 +29,121 @@ class ViewController: UIViewController {
         return view
     }()
     
+    
+    let label: UILabel = {
+        let label = UILabel()
+        label.backgroundColor = UIColor.clear
+        label.numberOfLines = 2
+        label.text = "Seasonal Specials"
+        label.textColor = ColorManager.customDarkGray()
+        label.font = UIFont(name: "BanglaSangamMN-Bold", size: 25)
+        label.textAlignment = .right
+        return label
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = UIColor.white
         
-//        setupBackground()
+        setupAnimator()
+        setupBackground()
+        
+
+        
+        var offset: CGFloat = 250
+        
+        for string in data {
+            if let view = addViewController(atOffset: offset, withData: string as AnyObject?) {
+                views.append(view)
+                offset -= 50
+            }
+        }
+        
         
     }
+
 
     
+    func setupAnimator() {
+        
+        dynamicAnimator = UIDynamicAnimator(referenceView: self.view)
+        gravity = UIGravityBehavior()
+        gravity.magnitude = 4
+        dynamicAnimator.addBehavior(gravity)
+        
+    }
+    
     func setupBackground() {
+        self.view.backgroundColor = UIColor.white
         
         imageView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height * 0.66)
+        imageView.image = UIImage(named: "healthy_recipes")
         self.view.addSubview(imageView)
         
-    }
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        label.frame = CGRect(x: 0, y: 70, width: self.view.frame.width - 16, height: 30)
+        self.view.addSubview(label)
+        
     }
 
+    func addViewController(atOffset offset:CGFloat, withData data:AnyObject?) -> UIView? {
+        
+        
+        //let frameForView = self.view.frame
+        let frameForView = self.view.bounds.offsetBy(dx: 0, dy: self.view.bounds.size.height - offset)
+        
+        let recipeVC = RecipeViewController()
+        
+        if let recipeView = recipeVC.view {
+            recipeView.frame = frameForView
+            recipeView.layer.cornerRadius = 5
+            recipeView.layer.shadowOffset = CGSize(width: 2, height: 2)
+            recipeView.layer.shadowColor = UIColor.black.cgColor
+            recipeView.layer.shadowRadius = 3
+            recipeView.layer.shadowOpacity = 0.5
+            
+            if let headerStr = data as! String? {
+                recipeVC.headerString = headerStr
+            }
+            
+            self.addChildViewController(recipeVC)
+            view.addSubview(recipeView)
+            recipeVC.didMove(toParentViewController: self)
+            
+//            let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(recognizer:)))
+//            view.addGestureRecognizer(panGestureRecognizer)
+//            
+//            let collision = UICollisionBehavior(items: [view])
+//            collision.collisionDelegate = self
+//            dynamicAnimator.addBehavior(collision)
+//            
+//            //lower boundary
+//            let boundaryY = view.frame.origin.y + view.frame.size.height
+//            var boundaryStart = CGPoint(x: 0, y: boundaryY)
+//            var boundaryEnd = CGPoint(x: view.bounds.size.width, y: boundaryY)
+//            collision.addBoundary(withIdentifier: 1 as NSCopying, from: boundaryStart, to: boundaryEnd)
+//            
+//            //upper boundary
+//            boundaryStart = CGPoint(x: 0, y: 0)
+//            boundaryEnd = CGPoint(x: self.view.frame.width, y: 0)
+//            collision.addBoundary(withIdentifier: 2 as NSCopying, from: boundaryStart, to: boundaryEnd)
+//            
+//            gravity.addItem(recipeView)
+//            
+//            let itemBehavior = UIDynamicItemBehavior(items: [recipeView])
+//            
+//            dynamicAnimator.addBehavior(itemBehavior)
+            
+            return recipeView
+            
+        }
+        
+        
+        return nil
+    }
+    
+    func handlePan(recognizer: UIPanGestureRecognizer) {
+        
+    }
 
 }
 
