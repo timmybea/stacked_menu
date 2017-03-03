@@ -29,14 +29,13 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
         return view
     }()
     
-    
     let label: UILabel = {
         let label = UILabel()
         label.backgroundColor = UIColor.clear
         label.numberOfLines = 2
         label.text = "Seasonal Specials"
         label.textColor = ColorManager.customDarkGray()
-        label.font = UIFont(name: "BanglaSangamMN-Bold", size: 25)
+        label.font = FontManager.headingFont()
         label.textAlignment = .right
         return label
     }()
@@ -44,11 +43,8 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
         setupAnimator()
         setupBackground()
-        
-
         
         var offset: CGFloat = 250
         
@@ -59,16 +55,12 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
             }
         }
     }
-
-
     
     func setupAnimator() {
-        
         dynamicAnimator = UIDynamicAnimator(referenceView: self.view)
         gravity = UIGravityBehavior()
         gravity.magnitude = 4
         dynamicAnimator.addBehavior(gravity)
-        
     }
     
     func setupBackground() {
@@ -85,8 +77,6 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
 
     func addViewController(atOffset offset:CGFloat, withData data:AnyObject?) -> UIView? {
         
-        
-        //let frameForView = self.view.frame
         let frameForView = self.view.bounds.offsetBy(dx: 0, dy: self.view.bounds.size.height - offset)
         
         let recipeVC = RecipeViewController()
@@ -133,68 +123,101 @@ class ViewController: UIViewController, UICollisionBehaviorDelegate {
             dynamicAnimator.addBehavior(itemBehavior)
             
             return recipeView
-            
         }
-        
-        
         return nil
     }
     
     func handlePan(recognizer: UIPanGestureRecognizer) {
         let touchedPoint = recognizer.location(in: self.view)
+        
         let draggedView = recognizer.view
         
         if recognizer.state == .began {
             let dragStartPoint = recognizer.location(in: draggedView)
             
-            if dragStartPoint.y < 200 {
+            if dragStartPoint.y < 200 { //you can only drag the view if you touch it near the top
                 viewDragging = true
                 previousTouchPoint = touchedPoint
-                
-            } else if recognizer.state == .changed && viewDragging {
-                let yOffset = previousTouchPoint.y - touchedPoint.y
-                
-                draggedView?.center = CGPoint(x: draggedView?.center.x, y: draggedView?.center.y - yOffset)
-                previousTouchPoint = touchedPoint
-                
-            } else if recognizer.state == .ended && viewDragging {
-                
-                dynamicAnimator.updateItem(usingCurrentState: <#T##UIDynamicItem#>)
-                
             }
+            
+        } else if recognizer.state == .changed && viewDragging {
+            let yOffset = previousTouchPoint.y - touchedPoint.y
+            
+            draggedView?.center = CGPoint(x: (draggedView?.center.x)!, y: (draggedView?.center.y)! - yOffset)
+            previousTouchPoint = touchedPoint
+            
+        } else if recognizer.state == .ended && viewDragging {
+            
+            pin(view: draggedView!)
+            
+            addVelocity(to: draggedView!, panGesture: recognizer)
+            
+            dynamicAnimator.updateItem(usingCurrentState: draggedView!)
+            
+            viewDragging = false
+        }
+    }
+
+    func pin(view: UIView) {
+        let viewHasReachedPinLocation = view.frame.origin.y < 170
+        
+        if viewHasReachedPinLocation {
+            if !viewPinned {
+                var snapPosition = self.view.center
+                snapPosition.y += 120
+                snap = UISnapBehavior(item: view, snapTo: snapPosition)
+                dynamicAnimator.addBehavior(snap)
+                viewPinned = true
+                setVisibility(mainView: view, alpha: 0)
+            }
+        } else {
+            if viewPinned {
+                dynamicAnimator.removeBehavior(snap)
+                viewPinned = false
+                setVisibility(mainView: view, alpha: 1)
+            }
+        }
+    }
+    
+    func setVisibility(mainView: UIView, alpha: CGFloat) {
+        for aView in views {
+            if aView != mainView {
+                aView.alpha = alpha
+            }
+        }
+    }
+    
+    func addVelocity(to view: UIView, panGesture: UIPanGestureRecognizer) {
+        var velocity = panGesture.velocity(in: self.view)
+        velocity.x = 0
+        
+        if let behavior = itemBehaviorfor(view: view) {
+            behavior.addLinearVelocity(velocity, for: view)
         }
         
     }
-
     
+    func itemBehaviorfor(view: UIView) -> UIDynamicItemBehavior? {
+        
+        for behavior in dynamicAnimator.behaviors {
+            if let itemBehavior = behavior as? UIDynamicItemBehavior {
+                if let possibleView = itemBehavior.items.first as? UIView, possibleView == view {
+                    return itemBehavior
+                }
+            }
+        }
+        return nil
+    }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    func collisionBehavior(_ behavior: UICollisionBehavior, beganContactFor item: UIDynamicItem, withBoundaryIdentifier identifier: NSCopying?, at p: CGPoint) {
+        
+        if let number = identifier as! Int? {
+            if number == 2 {
+                let view = item as! UIView
+                pin(view: view)
+            }
+            
+        }
+    }
 }
 

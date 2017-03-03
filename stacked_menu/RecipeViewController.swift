@@ -31,6 +31,7 @@ class RecipeViewController: UIViewController {
         textView.backgroundColor = UIColor.clear
         textView.text = PlaceHolderText.textViewText()
         textView.font = UIFont.systemFont(ofSize: 20)
+        textView.isScrollEnabled = false
         return textView
     }()
     
@@ -46,7 +47,7 @@ class RecipeViewController: UIViewController {
         label.frame = CGRect(x: 0, y: 20, width: self.view.frame.width, height: 26)
         self.view.addSubview(label)
         
-        textView.frame = CGRect(x: 20, y: 55, width: self.view.frame.width - 40, height: 360)
+        textView.frame = CGRect(x: 20, y: 55, width: self.view.frame.width - 40, height: 400)
         self.view.addSubview(textView)
         
         
